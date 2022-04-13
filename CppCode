@@ -1,0 +1,445 @@
+/*
+==============================================
+ PROGRAMMA PER IL CALCOLO DEL CODICE FISCALE
+==============================================
+Autori: Battelli Mattina, Carisi Luca, Rossi Valentino, Tiozzo Maksim
+*/
+
+
+#include <iostream>
+#include <ctime>
+#include <string>
+#include <cstdlib>
+#include <cstdio>
+#include <conio.h>
+using namespace std;
+
+//Dichiarazione Dei Prototipi
+    //funzione che porta in toUpper i dati inseriti
+    //by Maksim Tiozzo
+string stringUpper(string par) {
+
+    for (int i = 0; i < par.length(); i++) {
+        par[i] = toupper(par[i]);
+    }
+
+    return par;
+}
+//funzione che porta in toUpper i dati di tipo char
+//by Maksim Tiozzo
+char charUpper(char str) {
+    if (97 <= int(str) && int(str) <= 122) {
+        return char(int(str) - 32);
+    }
+    else {
+        return str;
+    }
+}
+    //funzione per la conversione di int Day_Calc a string
+    // by Luca Carisi
+
+
+    //funzione per il calcolo del cognome
+    // by Valentino Rossi
+string Calc_Surname(string cognome);
+    //funzione per il calcolo del nome
+    // by Valentino Rossi
+string Calc_FirstName(string nome);
+    //funzione per il calcolo dell'anno
+    //by Mattia Battelli
+string Calc_Year(string anno);      //restituisce le ultime 2 cifre dell'anno inserito
+    //funzione per il calcolo del mese
+    //by Carisi Luca
+char Calc_Month(string m);          //restituisce la lettera del mese corrispondente tramite uno switch
+    //funzione per il calcolo del checksum
+    //by Valentino Rossi
+string Calc_Checksum(string tempcodfisc);
+
+//Dichiarazione Delle Variabili Globali
+    //nome
+string FirstName;           //Nome Inserito
+string FirstName_Calc;      //Nome Calcolato
+    //cognome
+string SecondName;          //Cognome Inserito
+string SecondName_Calc;     //Cognome Calcolato
+    //genere
+char Genere;                //Genere dell'utente per calcolare Day_Calc
+//data di nascita
+int Day;                    //Giorno Inserito
+int Day_Calc;               //Giorno Calcolato [in corrispondenza del sesso (+40 se sesso corrisponde a F)]
+string Month;               //Mese Inserito
+char Month_Calc;            //Mese Calcolato [in corrispondenza dell' "if case" in funzione)
+string Year;                //Anno Inserito
+string Year_Calc;           //Anno Calcolato (le ultime due cifre corrispondendti)
+    //anagrafica
+string Prov;                //Provincia di Residenza
+string Comune;              //Comune di Residenza
+string Cod_Comune;          //legge un file di testo esterno per trovare la corrispondenza in terza colonna tra Comune e Prov e restituisce il Codice Comune corrispondente
+    //variabili comuni
+string Checksum;                                    //calcolo del Checksum sulla stringa Cod_Fiscale_temp
+//concatenazione per la creazione del Codice Fiscale Temporaneo per poi eseguire il calco del Checksum
+string Cod_Fiscale_temp = SecondName_Calc + FirstName_Calc + Year_Calc + Month_Calc + to_string(Day_Calc) + Cod_Comune;
+//concatenzazione del Codice Fiscale Completo
+string CodiceFiscale = Cod_Fiscale_temp + Checksum; //concatenazione delle stringe Cod_Fiscale_temp e Checksum per ottenere il Codice Fiscale Completo
+string consonanti = "QWRTYPSDFGHJKLZXCVBNM";        //stringa consonanti per la valutazione del cognome e del nome
+string vocali = "EUIOA";                            //stringa vocali per la valutazione del cognome e del nome
+const string numeri = "0123456789";                 //stinga per ricerca numeri
+const string lettere = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";//stringa per la ricerca lettere
+int valoriDispari[] = { 1,0,5,7,9,13,15,17,19,21,2,4,18,20,11,3,6,8,12,14,16,10,22,25,24,23 };
+
+
+
+//main compilato da: Carisi Luca
+int main() {
+
+    cout << "Programma per il calcolo del codice fiscale" << endl;
+    cout << "3I - A.S. 2021/2022" << endl;
+    cout << "Per altre informazioni, aprire il file CPP con il compiler desiderato." << endl << endl;
+
+    //chiedo il cognome
+    cout << "Per calcolare il tuo codice fiscale avrò bisogno del tuo Cognome: ";
+    getline(cin, SecondName);
+    SecondName = stringUpper(SecondName);
+
+    //chiedo il nome
+    cout << "Poi, del tuo Nome: ";
+    getline(cin, FirstName);
+    FirstName = stringUpper(FirstName);
+
+    //chiedo il sesso dell'utente
+    cout << "Qual è il tuo genere? (M = maschio / F = femmina)";
+    cin >> Genere;
+    Genere = charUpper(Genere);
+
+    //chiedo l'anno di nascita
+    cout << "Qual è il tuo anno di nascita? ";
+    cin >> Year;
+
+    //chiedo il mese di nascita
+    cout << "Il tuo mese di nascita (scritto in lettere): ";
+    cin >> Month;
+    Month = stringUpper(Month);
+
+    //chiedo il giorno di nascita
+    cout << "Il tuo giorno di nascita: ";
+    cin >> Day;
+
+    // Funzione per il calcolo del giorno
+    // Se il sesso dell'utente che inserisce i dati è corrispondente a F al giorno di nascita andrò a sommare 40
+    // by Carisi Luca
+    if (Genere == 'F') {
+        Day_Calc = Day + 40;
+    }
+    else {
+        Day_Calc = Day;
+    }
+  
+    //chiedo il comune
+    cout << "In quale comune sei nato?";
+    cin.ignore();
+    getline(cin, Comune);
+    Comune = stringUpper(Comune);
+
+    //chiedo la provincia
+    cout << "In quale provincia si trova (inserisci solo la sigla): ";
+    getline(cin, Prov);
+    Prov = stringUpper(Prov);
+
+    //faccio un riassunto dei dati inseriti
+    cout << "Allora tu sei: " << SecondName << " " << FirstName << " (di sesso " << Genere << ")  nato/a " << Comune << " (" << Prov << ") il "
+        << Day << " " << Month << " " << Year << ".";
+
+    cout << endl << endl;
+
+    //calcolo il codice fiscale
+    SecondName_Calc = Calc_Surname(SecondName);
+    FirstName_Calc = Calc_FirstName(FirstName);
+    Year_Calc = Calc_Year(Year);
+    Month_Calc = Calc_Month(Month);
+    Checksum = Calc_Checksum(Cod_Fiscale_temp);
+
+
+    //faccio un riassunto dei dati inseriti [DEBUG FORM]
+    cout << "Allora tu sei: " << SecondName_Calc << " " << FirstName_Calc << " (di sesso " << Genere << ")  nato/a " << Comune << " (" << Prov << ") il "
+    << Day_Calc << " " << Month_Calc << " " << Year_Calc << ".";
+
+    cout << endl << endl;
+
+}
+
+//funzone per il calcolo del cognome
+//by Valentino Rossi (commenti Luca Carisi)
+string Calc_Surname(string cognome) {
+    int secondname_lung = cognome.length();
+    int consonanti_lung = consonanti.length();
+    int vocali_lung = vocali.length();
+    int cod_lung;
+    int i, j, h;
+    int conta = 0;
+    int cod_consonanti = 0;
+    int contaConsonanti = 0;
+    string surname = "";
+
+    //se la lunghezza del cognome è 1 allora la stringa sarà cognome + XX
+    if (secondname_lung == 1) {
+        surname = cognome + "XX";
+    }
+    //se la lunghezza del cognome è 2 allora la stringa sarà cognome +X
+    if (secondname_lung == 2) {
+        surname = cognome + "X";
+    }
+    if (secondname_lung > 2) {
+        for (i = 0; i < secondname_lung; i++) {
+            for (j = 0; j < consonanti_lung; j++) {
+                if (surname[i] == consonanti[j]) {
+                    contaConsonanti++;
+                }
+            }
+        }
+        if (contaConsonanti < 3) {
+            for (i = 0; i < secondname_lung && conta < 2; i++) {
+                for (j = 0; j < consonanti_lung && conta < 2; j++) {
+                    if (surname[i] == consonanti[j]) {
+                        surname = surname + consonanti[j];
+                        cod_consonanti++;
+                        conta++;
+                    }
+                }
+            }
+            cod_lung = surname.length();
+            for (i = 0; i < secondname_lung && cod_lung < 3; i++) {
+                for (j = 0; j < vocali_lung; j++) {
+                    if (surname[i] == vocali[j]) {
+                        surname = surname + vocali[j];
+                        cod_lung++;
+                    }
+                }
+            }
+        }
+        if (contaConsonanti >= 3) {
+            for (i = 0; i < secondname_lung && conta < 3; i++) {
+                for (j = 0; j < consonanti_lung && conta < 3; j++) {
+                    if (surname[i] == consonanti[j]) {
+                        surname = surname + cognome[i];
+                        conta++;
+                    }
+                }
+            }
+        }
+
+    }
+    return surname;
+}
+
+//funzione per il calcolo del nome
+//by Valentino Rossi
+string Calc_FirstName(string nome) {
+    int lunghezzaNome = nome.length();
+    int lunghezzaConsonanti = consonanti.length();
+    int lunghezzaVocali = vocali.length();
+    int lunghezzaCodice;
+    int i;
+    int j;
+    int h;
+    int conta = 0;
+    int cosonantiCodice = 0;
+    int contaConsonanti = 0;
+    string codiceNome = "";
+
+    if (lunghezzaNome == 1) {
+        codiceNome = nome + "XX";
+    }
+    if (lunghezzaNome == 2){
+        codiceNome = nome + "X";
+    }
+    if (lunghezzaNome > 2) {
+        for (i = 0; i < lunghezzaNome; i++) {
+            for (j = 0; j < lunghezzaConsonanti; j++) {
+                if (nome[i] == consonanti[j]) {
+                    contaConsonanti++;
+                }
+            }
+        }
+        if (contaConsonanti < 3) {
+            for (i = 0; lunghezzaNome && conta < 2; i++) {
+                for (j = 0; j < lunghezzaConsonanti && conta < 2; j++) {
+                    if (nome[i] == consonanti[j]) {
+                        codiceNome = codiceNome + consonanti[j];
+                        cosonantiCodice++;
+                        conta++;
+                    }
+                }
+            }
+            lunghezzaCodice = codiceNome.length();
+            for (i = 0; i < lunghezzaNome && lunghezzaCodice < 3; i++) {
+                for (j = 0; j < lunghezzaVocali; j++) {
+                    if (nome[i] == vocali[j]) {
+                        codiceNome = codiceNome + vocali[j];
+                        lunghezzaCodice++;
+                    }
+                }
+            }
+        }
+        if (contaConsonanti == 3) {
+            for (i = 0; i < lunghezzaNome && conta < 3; i++) {
+                for (j = 0; j < lunghezzaConsonanti && conta < 3; j++) {
+                    if (nome[i] == consonanti[j]) {
+                        codiceNome = codiceNome + nome[i];
+                        conta++;
+                    }
+                }
+            }
+        }
+        if (contaConsonanti > 3) {
+            for (i = 0; i < lunghezzaNome && conta < 4; i++) {
+                for (j = 0; j < lunghezzaConsonanti && conta < 4; j++) {
+                    if (nome[i] == consonanti[j]) {
+                        codiceNome = codiceNome + nome[i];
+                        conta++;
+                    }
+                }
+            }
+            codiceNome.erase(1, 1);
+        }
+    }
+
+    return codiceNome;
+}
+
+
+//funzione per il calcolo dell'anno
+//by Mattia Battelli
+string Calc_Year(string anno) {
+    string Year_Return;
+
+    anno = anno.substr();
+
+    Year_Return = "";
+    Year_Return += anno[2];
+    Year_Return += anno[3];
+
+    return Year_Return;
+}
+
+//funzione per il calcolo del mese 
+//by Carisi Luca
+char Calc_Month(string m) {
+    char mm;
+
+    if (m == "GENNAIO") {
+        mm = 'A';
+    }
+    if (m == "FEBBRAIO") {
+        mm = 'B';
+    }
+    if (m == "MARZO") {
+        mm = 'C';
+    }
+    if (m == "APRILE") {
+        mm = 'D';
+    }
+    if (m == "MAGGIO") {
+        mm = 'E';
+    }
+    if (m == "GIUGNO") {
+        mm = 'H';
+    }
+    if (m == "LUGLIO") {
+        mm = 'L';
+    }
+    if (m == "AGOSTO") {
+        mm = 'M';
+    }
+    if (m == "SETTEMBRE") {
+        mm = 'P';
+    }
+    if (m == "OTTOBRE") {
+        mm = 'R';
+    }
+    if (m == "NOVEMBRE") {
+        mm = 'S';
+    }
+    if (m == "DICEMBRE") {
+        mm = 'T';
+    }
+
+    return mm;
+}
+
+//funzione per il calco del Codice comune in funzione di Comune e Prov
+//by ***
+
+
+//funzione per il calcolo del checksum
+//by Valentino Rossi
+string Calc_Checksum(string tempcodfisc) {
+    string pari = "";                                   // inizializzo stringa vuota da riempire con i caratteri in posizione pari del codice fiscale 
+    string dispari = "";                                // inizializzo stringa vuota da riempire con i caratteri in posiz<ione dispari del codice fiscale 
+    string checksum = "";                               // stringa vuota dove mettterò il valore di ritorno  
+    int lunghezzaCodiceFiscale = Cod_Fiscale_temp.length();// trovo la lunghezza del codice fiscale 
+    int lunghezzaLettere = lettere.length();            // prendo la lunghezza della stringa di controllo lettere e la metto in una variabile 
+    int lunghezzaNumeri = numeri.length();              // prendo la lunghezz< della stringa di controllo numeri e la metto in una variabile 
+    int lunghezzaStringaPari;                           // dichiaro la variabile di lunghezza della stringa dei caratteri in posizione pari del codice fiscale 
+    int lunghezzaStringaDispari;                        // dichiaro la variabile di lunghezza della stringa dei caratteri in posizione dispari del codice fiscale 
+    int i;                                              // indice di scaorrimento 1
+    int j;                                              // indice di scorrimento 2
+    int k;                                              // indice di scorrimento 3
+    bool x;                                             // boleana usata come condizione di uscita nei cicli con ricerca parziale 
+    int somma = 0;                                      // variabile per la somma dei valori trovati in base ai caratteri del codice fiscale confrontati con i valori tabellati 
+    int resto = 0;                                      // variabile del resto della divisione per 26 richiesta dal protocollo 
+
+    for (i = 0; i < lunghezzaCodiceFiscale; i = i + 2) {    // ciclo per riempire la variabile dispari con tutti i caratteri in posizione dispari del CF
+        dispari = dispari + Cod_Fiscale_temp[i];
+    }
+    for (i = 1; i < lunghezzaCodiceFiscale; i = i + 2) {    //ciclo per riempire la variabile paeri con tutti i carratteri in posizione pari del CF
+        pari = pari + Cod_Fiscale_temp[i];
+    }
+
+    lunghezzaStringaPari = pari.length();                   // dichiaro la lunghezza delle stringhe sovracitate 
+    lunghezzaStringaDispari = dispari.length();
+
+    for (i = 0; i < lunghezzaStringaPari; i++) {            // ciclo per associare i caratteri in posizione pari al loro valore effettivo (dato da tabella) 
+        x = true;                                           // confrontando il carattere preso in causa dall'indice i nella stringa pari, per i numeri e le lettere   
+        for (j = 0; j < lunghezzaNumeri && x == true; j++) {// se è un numero in questo caso sommo direttamente l'indice di scorrimemto dei numeri j
+            if (pari[i] == numeri[j]) {
+                somma = somma + j;
+                x = false;
+            }
+            else {
+                for (k = 0; k < lunghezzaLettere && x == true; k++) {       // altrimenti se è una lettera il procedimento è lo stesso ma con un ciclo più grande 
+                    if (pari[i] == lettere[k]) {                            // per i caratteri in posizione pari sommo l'indice dato che i valori sono ordinati in ordine crescente 
+                        somma = somma + k;                                  // cioe: il valore di 0=0, 1=1; 2=2 ecc. e per le lettere A=0,B=1,C=2 ecc.
+                        x = false;                                          // sommando a ogni riscontro il valore trovato nella variabile somma        
+
+                    }
+                }
+            }
+        }
+    }
+    for (i = 0; i < lunghezzaStringaDispari; i++) {                     // ciclo per associare i caratteri in posizione dispari al loro valore effettivo (dato da tabella)
+        x = true;                                                       // confrontando il carattere preso in causa dall'indice i nella strnga pari, per i numeri e le lettere
+        for (j = 0; j < lunghezzaNumeri && x == true; j++) {            // in questo caso invece i valori dispari non sono ordinati quindi non posso sommare gli indici 
+            if (dispari[i] == numeri[j]) {                              // ho cretato un array di valori, e trovata una uguaglianza prendo il valore dentro alla cella di array
+                somma = somma + valoriDispari[j];                       // in posizione dell'indice 
+                x = false;
+            }
+            else {
+                for (k = 0; k < lunghezzaLettere && x == true; k++) {
+                    if (dispari[i] == lettere[k]) {
+                        somma = somma + valoriDispari[k];
+                        x = false;
+                    }
+                }
+            }
+        }
+    }
+
+    resto = somma % 26;             // prendo la somma totale dei caratteri in posizione dispari e pari e la divido per 26 come da protocollo tenendo il resto
+
+    checksum = lettere[resto];      // faccio diventare la variabile checksum la lettera corrispondente al resto ottenuto dalla divisione della somma 
+                                    // dei valori dei caratteri in posizione pari e dispari (il resto dato dalla divisione da il valore da cercare nella
+                                    //  tabella per poter associare il numero a una lettera) 
+
+    return checksum;
+}
+
